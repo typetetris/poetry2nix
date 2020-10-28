@@ -152,14 +152,19 @@ pythonPackages.callPackage
       # We need to retrieve kind from the interpreter and the filename of the package
       # Interpreters should declare what wheel types they're compatible with (python type + ABI)
       # Here we can then choose a file based on that info.
-      src =
+      src = let
+          # tagRef = if (sourceSpec ? tag) then "refs/tags/${sourceSpec.tag}" else null;
+        in
         if isGit then
           (
-            builtins.fetchGit {
+            builtins.fetchGit (lib.debug.traceValSeq ({
               inherit (source) url;
               rev = source.resolved_reference or source.reference;
-              ref = sourceSpec.branch or sourceSpec.rev or sourceSpec.tag or "HEAD";
-            }
+            } // lib.optionalAttrs (sourceSpec ? tag || sourceSpec ? branch) {
+              ref = if (sourceSpec ? tag)
+                    then "refs/tags/${sourceSpec.tag}"
+                    else sourceSpec.branch;
+            }))
           ) else if isLocal then (poetryLib.cleanPythonSources { src = localDepPath; }) else
         fetchFromPypi {
           pname = name;
