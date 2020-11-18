@@ -155,14 +155,14 @@ pythonPackages.callPackage
       src = let
           # tagRef = if (sourceSpec ? tag) then "refs/tags/${sourceSpec.tag}" else null;
         in
-        if isGit then
+        if builtins.trace sourceSpec isGit then
           (
             builtins.fetchGit (lib.debug.traceValSeq ({
               inherit (source) url;
               rev = source.resolved_reference or source.reference;
               ref = if (sourceSpec ? tag)
                     then "refs/tags/${sourceSpec.tag}"
-                    else (sourceSpec.branch or "HEAD");
+                    else (sourceSpec.branch or "master");
             }))
           ) else if isLocal then (poetryLib.cleanPythonSources { src = localDepPath; }) else
         fetchFromPypi {
